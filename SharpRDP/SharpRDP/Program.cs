@@ -30,7 +30,7 @@ namespace SharpRDP
             Console.WriteLine("  Execute command elevated through task manager");
             Console.WriteLine("    SharpRDP.exe computername=domain.target command=\"C:\\Temp\\file.exe\" username=domain\\user password=password elevated=taskmgr");
             Console.WriteLine("  Use WMI to retrieve the keyboard layout of the remote target");
-            Console.WriteLine("    SharpRDP.exe LOL wmi=true");
+            Console.WriteLine("    SharpRDP.exe wmi=true [other options]");
         }
         static void Main(string[] args)
         {
