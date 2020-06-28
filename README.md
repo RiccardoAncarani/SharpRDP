@@ -15,6 +15,12 @@ Regular RDP connection and execution
 ```
 
 ```
+# Note tha this method need to use WMI and therefore connection to port 135 must be allowed
+Use WMI to retrieve the remote keyboard layout
+	SharpRDP.exe wmi=true [other options]
+```
+
+```
 Exec program as child process of cmd or powershell
   SharpRDP.exe computername=target.domain command="C:\Temp\file.exe" username=domain\user password=password exec=cmd
 ```
