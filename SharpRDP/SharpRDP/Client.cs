@@ -13,6 +13,7 @@ namespace SharpRDP
 {
     public class Client
     {
+        private string keyboardLayout;
         private Dictionary<string, Code> keycode;
         private IMsRdpClientNonScriptable keydata;
         private int LogonErrorCode { get; set; }
@@ -92,8 +93,9 @@ namespace SharpRDP
             SSL_ERR_SMARTCARD_WRONG_PIN = 0x1C07
         }
 
-        public void CreateRdpConnection(string server, string user, string domain, string password, string command, string execw, string runelevated, bool condrive, bool tover, bool nla)
+        public void CreateRdpConnection(string server, string user, string domain, string password, string command, string execw, string runelevated, bool condrive, bool tover, bool nla, string layout)
         {
+            this.keyboardLayout = layout;
             keycode = new Dictionary<String, Code>();
             KeyCodes();
             runtype = runelevated;
@@ -493,7 +495,18 @@ namespace SharpRDP
             keycode["/"] = new Code(new[] { false, true }, new[] { 0x35 });
             keycode["["] = new Code(new[] { false, true }, new[] { 0x1a });
             keycode["]"] = new Code(new[] { false, true }, new[] { 0x1b });
-            keycode["\\"] = new Code(new[] { false, true }, new[] { 0x2b });
+
+            switch (keyboardLayout)
+            {
+                //https://github.com/apache/guacamole-server/tree/master/src/protocols/rdp/keymaps
+                case "00000809": // UK layout
+                    keycode["\\"] = new Code(new[] { false, true }, new[] { 0x56 });
+                    break;
+                default:
+                    keycode["\\"] = new Code(new[] { false, true }, new[] { 0x2b });
+                    break;
+            }
+            
             keycode[";"] = new Code(new[] { false, true }, new[] { 0x27 });
             keycode["'"] = new Code(new[] { false, true }, new[] { 0x28 });
 

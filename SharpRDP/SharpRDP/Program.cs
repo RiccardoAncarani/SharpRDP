@@ -2,6 +2,7 @@
 using System.IO.Compression;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Management;
 using System.IO;
 
 namespace SharpRDP
@@ -28,6 +29,8 @@ namespace SharpRDP
             Console.WriteLine("    SharpRDP.exe computername=domain.target command=\"C:\\Temp\\file.exe\" username=domain\\user password=password elevated=winr");
             Console.WriteLine("  Execute command elevated through task manager");
             Console.WriteLine("    SharpRDP.exe computername=domain.target command=\"C:\\Temp\\file.exe\" username=domain\\user password=password elevated=taskmgr");
+            Console.WriteLine("  Use WMI to retrieve the keyboard layout of the remote target");
+            Console.WriteLine("    SharpRDP.exe LOL wmi=true");
         }
         static void Main(string[] args)
         {
@@ -62,7 +65,8 @@ namespace SharpRDP
             bool connectdrive = false;
             bool takeover = false;
             bool nla = false;
-            
+            bool wmi = false;
+
             if (arguments.ContainsKey("username"))
             {
                 if (!arguments.ContainsKey("password"))
@@ -143,10 +147,60 @@ namespace SharpRDP
                         nla = true;
                     }
                 }
+
+                if (arguments.ContainsKey("wmi"))
+                {
+                    if (arguments["wmi"].ToLower()  == "true")
+                    {
+                        wmi = true;
+                    }
+                }
+
+
+
                 string[] computerNames = arguments["computername"].Split(',');
                 foreach (string server in computerNames)
                 {
-                    rdpconn.CreateRdpConnection(server, username, domain, password, command, execw, execElevated, connectdrive, takeover, nla);
+                    // detect remote keyboard layout
+                    string layout = null;
+                    if (wmi)
+                    {
+                        Console.WriteLine("[.] Acquiring keyboard layout..");
+                        ConnectionOptions options = new ConnectionOptions();
+
+                        options.Impersonation = System.Management.ImpersonationLevel.Impersonate;
+                        options.EnablePrivileges = true;
+                        options.Authentication = AuthenticationLevel.PacketPrivacy;
+
+                        if (!String.IsNullOrEmpty(username))
+                        {
+                            Console.WriteLine("[+] Using explicit credentials");
+                            options.Username = username;
+                            options.Password = password;
+
+
+                        }
+
+
+                        ManagementScope scope = new ManagementScope("\\\\" + server + "\\root\\cimv2", options);
+                        scope.Connect();
+                        ObjectQuery query = new ObjectQuery("SELECT * FROM Win32_Keyboard");
+                        ManagementObjectSearcher searcher = new ManagementObjectSearcher(scope, query);
+                        ManagementObjectCollection q = searcher.Get();
+                        
+                        foreach (ManagementObject m in q)
+                        {
+                            layout = m["Layout"].ToString();
+                            Console.WriteLine("[+] Acquired remote keyboard layout via WMI: " + layout);
+                        }
+                    }
+                    else
+                    {
+                        layout = "0000";
+                    }
+                    
+
+                    rdpconn.CreateRdpConnection(server, username, domain, password, command, execw, execElevated, connectdrive, takeover, nla, layout);
                 }
             }
             else
